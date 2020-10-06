@@ -3,7 +3,7 @@
 // Position
 //**************************************************
 
-class Position {
+public class Position {
 	private int row;
 	private int column;
 
@@ -74,5 +74,23 @@ class Position {
 	*/
 	public int position () {
 		return (((row - 1) * 9) + column) -1;
+	}
+
+    /**
+     * Quadrant base. Quadrante is a 3 x 3 cells.
+     * @param value (int) horizontal or vertical position
+     * @return (int) quadrant base (horizontal or vertical)
+     */
+    public int base (int value) {
+        return value - ((value - 1) % 3);
+    }
+
+	public boolean quadrant (Position other) {
+        if (base(getColumn()) == base(other.getColumn())) {
+	        if (base(getRow()) == base(other.getRow())) {
+				return true;
+			}
+		}
+		return false;
 	}
 }

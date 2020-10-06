@@ -1,3 +1,4 @@
+
 /**
  * Game board with every possibility to each cell
  */
@@ -104,7 +105,7 @@ class Board {
         }
     }
     
-	/** Rule 2 RESTRICTION: if the possibilities of a house come to an option,
+	/** Rule 2 RESTRICTION: if the possibilities of a cell come to one option,
      * this only possibility is the value resolved for this house.
 	@param location (Position) cell position
 	@param index (int) elected possibility */
@@ -182,13 +183,12 @@ class Board {
         return false;
     }
 
-	/** Rule 4 PROJECTION: within a quadrant, if a possible value is restricted
-     * to a single line, remove this possibility from this line in other
-     * quadrants. Within a quadrant, if a possible value is restricted to a
-     * single column, remove this possibility from this column in other quadrants.
+	/** Rule 4 CONFINEMENT ORTO: within a quadrant, if a possible value is
+     * restricted to a single row or column, remove this possibility from this
+     * row or column in other quadrants.
 	@param location (Position) cell position
 	@result (bool) indicates whether or not any projection was made */
-    public boolean regra4_projecao (Position location) throws Exception {
+    public boolean rule4_confinement_ortogonal (Position location) throws Exception {
         boolean result = false;
     
         // checks if the number of possibilities is greater than 1
@@ -255,11 +255,82 @@ class Board {
             }
         }
         if (result) {
-            System.out.print ("PROJECAO linha " + location.getRow() + " coluna " + location.getColumn() + "\n");
+            System.out.print ("CONFINAMENTO ORTO linha " + location.getRow() + " coluna " + location.getColumn() + "\n");
         }
         return result;
     }
     
+	/** Rule 4 CONFINEMENT QUAD: within a row or column, if a possible value is
+     * restricted to a quadrant, remove this possibility from other rows or
+     * columns in this quadrants.
+	@param location (Position) cell position
+	@result (bool) indicates whether or not any projection was made */
+    public boolean rule4_confinement_quadrant (Position location) throws Exception {
+        boolean result = false;
+        if (count_chances(location) > 1) {
+            for (int index = 1; index <= 9; index++) {
+                if (is_possible(location, index)) {
+
+                    // check row
+                    boolean valid = true;
+                    for (int row = 1; row <= 9; row++) {
+                        Position other = new Position (row, location.getColumn());
+                        if (location.quadrant(other) == false) {
+                            if (is_possible(other, index)) {
+                                valid = false;
+                                break;
+                            }
+                        }
+                    }
+                    if (valid) {
+                        int col_base = base(location.getColumn());
+                        int row_base = base(location.getRow());
+                        for (int column = col_base; column <= (col_base + 2); column++) {
+                            if (column != location.getColumn()) {
+                                for (int row = row_base; row <= (row_base + 2); row++) {
+                                    Position other = new Position (row, column);
+                                    if (discard(other, index)) {
+                                        result = true;
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                    // check column
+                    valid = true;
+                    for (int column = 1; column <= 9; column++) {
+                        Position other = new Position (location.getRow(), column);
+                        if (location.quadrant(other) == false) {
+                            if (is_possible(other, index)) {
+                                valid = false;
+                                break;
+                            }
+                        }
+                    }
+                    if (valid) {
+                        int col_base = base(location.getColumn());
+                        int row_base = base(location.getRow());
+                        for (int column = col_base; column <= (col_base + 2); column++) {
+                            for (int row = row_base; row <= (row_base + 2); row++) {
+                                if (row != location.getRow()) {
+                                    Position other = new Position (row, column);
+                                    if (discard(other, index)) {
+                                        result = true;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        if (result) {
+            System.out.print ("CONFINAMENTO QUAD linha " + location.getRow() + " coluna " + location.getColumn() + "\n");
+        }
+        return result;
+    }
+
     /**
      * if possibility is valid on a cell, clear this possibilitity in another cell
      */
@@ -384,7 +455,7 @@ class Board {
         }
         return result;
     }
-    
+
     public void show () throws Exception {
         for (int row = 1; row <=9; row++) {
             if (row > 1)
